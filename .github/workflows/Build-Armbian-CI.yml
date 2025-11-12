@@ -16,7 +16,7 @@ on:
         type: choice
         description: 'Board'
         options:
-        - lemonpi
+        - Panther-x2
         - som3588-cat
         - ufi001c
         - uz801
