@@ -1,0 +1,68 @@
+name: Build Armbian with Custom Kernel X2
+
+on:
+  workflow_dispatch: # 允许手动触发
+    inputs:
+      board:
+        description: 'Board name (e.g., orangepi-zero2, rockpi-4b)'
+        required: true
+        default: 'orangepi-zero2'
+      kernel_version:
+        description: 'Precompiled kernel version to download (e.g., 6.6.30)'
+        required: true
+        default: '6.6.30'
+      branch:
+        description: 'Armbian branch (e.g., current, legacy)'
+        required: true
+        default: 'current'
+      release:
+        description: 'OS release (e.g., jammy, bullseye)'
+        required: true
+        default: 'jammy'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: armbian/build:latest
+
+    steps:
+      - name: Checkout Armbian build framework
+        uses: actions/checkout@v4
+        with:
+          path: build
+
+      - name: Prepare build environment
+        run: |
+          cd build
+          echo "WORKDIR=$PWD" >> $GITHUB_ENV
+          ./compile.sh BOARD=${{ github.event.inputs.board }} BRANCH=${{ github.event.inputs.branch }} RELEASE=${{ github.event.inputs.release }} BUILD_MINIMAL=yes BUILD_DESKTOP=no KERNEL_ONLY=no KERNEL_CONFIGURE=no PRE_DOWNLOAD_DEBS=no PREPARE_ONLY=yes
+
+      - name: Download precompiled kernel packages
+        run: |
+          # ！！！这里是关键：替换为实际可用的第三方内核包URL！！！
+          # 示例：假设有一个仓库按固定结构提供包
+          BASE_URL="https://github.com/ophub/kernel/releases/download/kernel_rk35xx/${{ github.event.inputs.kernel_version }}-${{ github.event.inputs.board }}"
+          
+          cd ${{ env.WORKDIR }}/output/debs
+          wget "$BASE_URL/linux-dtb-${{ github.event.inputs.branch }}-${{ github.event.inputs.kernel_version }}-${{ github.event.inputs.board }}.deb"
+          wget "$BASE_URL/linux-image-${{ github.event.inputs.branch }}-${{ github.event.inputs.kernel_version }}-${{ github.event.inputs.board }}.deb"
+          # 如果需要编译外部模块（如WireGuard），还需要headers包
+          # wget "$BASE_URL/linux-headers-${{ github.event.inputs.branch }}-${{ github.event.inputs.kernel_version }}-${{ github.event.inputs.board }}.deb"
+
+      - name: Build minimal image using precompiled kernel
+        run: |
+          cd ${{ env.WORKDIR }}
+          # 关键参数说明：
+          # KERNEL_ONLY=no 告诉系统我们要生成完整镜像
+          # KERNEL_CONFIGURE=no 跳过内核配置
+          # BUILD_MINIMAL=yes 构建最小化系统（没有多余软件包）
+          # BUILD_DESKTOP=no 不构建桌面环境
+          ./compile.sh BOARD=${{ github.event.inputs.board }} BRANCH=${{ github.event.inputs.branch }} RELEASE=${{ github.event.inputs.release }} BUILD_MINIMAL=yes BUILD_DESKTOP=no KERNEL_ONLY=no KERNEL_CONFIGURE=no
+
+      - name: Upload image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: armbian-custom-kernel-${{ github.event.inputs.board }}-${{ github.event.inputs.kernel_version }}
+          path: ${{ env.WORKDIR }}/output/images/
+          retention-days: 7
