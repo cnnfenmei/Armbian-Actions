@@ -95,7 +95,7 @@ concurrency:
 env:
   DEFAULT_SCHEDULE_RELEASES: "plucky noble trixie"
   ALL_RELEASES: "bookworm bullseye buster focal jammy noble oracular plucky sid trixie"
-  BOARD: "lemonpi som3588-cat ufi001c uz801"
+  BOARD: "Panther-x2 som3588-cat ufi001c uz801"
 
 # ====================================================================
 #  JOBS
