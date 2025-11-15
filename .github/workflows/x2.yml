@@ -42,7 +42,7 @@ jobs:
         run: |
           # ！！！这里是关键：替换为实际可用的第三方内核包URL！！！
           # 示例：假设有一个仓库按固定结构提供包
-          BASE_URL="https://github.com/ophub/kernel/releases/download/kernel_rk35xx/${{ github.event.inputs.kernel_version }}-${{ github.event.inputs.board }}"
+          BASE_URL="https://github.com/ophub/kernel/releases/download/kernel_rk35xx/${{ github.event.inputs.kernel_version }}$.tar.gz"
           
           cd ${{ env.WORKDIR }}/output/debs
           wget "$BASE_URL/linux-dtb-${{ github.event.inputs.branch }}-${{ github.event.inputs.kernel_version }}-${{ github.event.inputs.board }}.deb"
